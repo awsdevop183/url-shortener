@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>awshero.shop – Lightning Fast URL Shortener</title>
+    <meta name="description" content="Shorten URLs instantly with awshero.shop. Powered by AWS serverless architecture.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #0a0e17;
+            --bg-surface: #111827;
+            --bg-elevated: #1a2332;
+            --bg-hover: #243044;
+            --accent-primary: #f97316;
+            --accent-secondary: #fb923c;
+            --accent-glow: rgba(249, 115, 22, 0.4);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-subtle: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(249, 115, 22, 0.3);
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background Grid */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black 70%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+            bottom: -100px;
+            left: -100px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(10, 14, 23, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-badge {
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-accent);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            letter-spacing: 0.5px;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* URL Shortener Card */
+        .shortener-card {
+            width: 100%;
+            max-width: 700px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shortener-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            padding-right: 140px;
+            background: var(--bg-deep);
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .url-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .shorten-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .shorten-btn:hover {
+            transform: translateY(-50%) scale(1.02);
+            box-shadow: 0 6px 25px var(--accent-glow);
+        }
+
+        .shorten-btn:active {
+            transform: translateY(-50%) scale(0.98);
+        }
+
+        .shorten-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: translateY(-50%);
+        }
+
+        .shorten-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .shorten-btn.loading .btn-text { display: none; }
+        .shorten-btn.loading .spinner { display: inline-block; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Result Area */
+        .result-area {
+            display: none;
+            padding: 1.5rem;
+            background: var(--bg-elevated);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .result-area.error {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-label::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .result-url-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-deep);
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .result-url {
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.95rem;
+        }
+
+        /* Stats Section */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Features Section */
+        .features {
+            position: relative;
+            z-index: 1;
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .features-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .features-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Architecture Section */
+        .architecture {
+            position: relative;
+            z-index: 1;
+            padding: 4rem 2rem 6rem;
+            text-align: center;
+        }
+
+        .arch-diagram {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .arch-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem 2rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .arch-node:hover {
+            border-color: var(--accent-primary);
+            transform: scale(1.05);
+        }
+
+        .arch-node-icon {
+            font-size: 2rem;
+        }
+
+        .arch-node-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .arch-node-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .arch-arrow {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .shortener-card {
+                padding: 1.5rem;
+            }
+
+            .url-input {
+                padding-right: 1rem;
+                padding-bottom: 4rem;
+            }
+
+            .shorten-btn {
+                right: 8px;
+                left: 8px;
+                bottom: 8px;
+                top: auto;
+                transform: none;
+                width: calc(100% - 16px);
+            }
+
+            .shorten-btn:hover,
+            .shorten-btn:active {
+                transform: none;
+            }
+
+            .result-url-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-row {
+                gap: 1.5rem;
+            }
+
+            .arch-flow {
+                flex-direction: column;
+            }
+
+            .arch-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <div class="logo-icon">⚡</div>
+                <span class="logo-text">awshero.shop</span>
+            </a>
+            <div class="nav-badge">SERVERLESS</div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            Powered by AWS Lambda + DynamoDB
+        </div>
+        
+        <h1>
+            Shorten URLs at<br>
+            <span>Lightning Speed</span>
+        </h1>
+        
+        <p class="hero-subtitle">
+            Transform long URLs into short, memorable links. 
+            Built on serverless architecture for unlimited scale and near-zero latency.
+        </p>
+
+        <!-- URL Shortener Card -->
+        <div class="shortener-card">
+            <div class="input-wrapper">
+                <input 
+                    type="url" 
+                    id="urlInput" 
+                    class="url-input" 
+                    placeholder="Paste your long URL here..."
+                    autocomplete="off"
+                >
+                <button id="shortenBtn" class="shorten-btn">
+                    <span class="btn-text">Shorten</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+
+            <div id="resultArea" class="result-area">
+                <div class="result-label">Your shortened URL is ready!</div>
+                <div class="result-url-wrapper">
+                    <span id="shortUrl" class="result-url"></span>
+                    <button id="copyBtn" class="copy-btn">Copy</button>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalUrls">—</div>
+                    <div class="stat-label">URLs Shortened</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">&lt;50ms</div>
+                    <div class="stat-label">Avg Response</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Scale Limit</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-header">
+            <h2>Why awshero.shop?</h2>
+            <p>Enterprise-grade URL shortening, completely serverless</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3>Blazing Fast</h3>
+                <p>CloudFront edge locations worldwide ensure your redirects happen in milliseconds, no matter where your users are.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3>Infinite Scale</h3>
+                <p>Lambda and DynamoDB automatically scale to handle millions of requests. Pay only for what you use.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure by Default</h3>
+                <p>HTTPS everywhere with AWS Certificate Manager. Your links are always encrypted in transit.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Cost Effective</h3>
+                <p>Serverless means no idle resources. Handle thousands of requests for pennies with the AWS free tier.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Click Analytics</h3>
+                <p>Track how many times each shortened URL has been clicked with built-in analytics.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛠️</div>
+                <h3>Developer Friendly</h3>
+                <p>Full REST API available. Integrate URL shortening into your applications easily.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section class="architecture">
+        <div class="arch-diagram">
+            <h3 style="margin-bottom: 2rem; color: var(--text-secondary);">Serverless Architecture</h3>
+            <div class="arch-flow">
+                <div class="arch-node">
+                    <div class="arch-node-icon">🌐</div>
+                    <div class="arch-node-label">CloudFront</div>
+                    <div class="arch-node-sub">CDN + SSL</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">🔀</div>
+                    <div class="arch-node-label">API Gateway</div>
+                    <div class="arch-node-sub">REST API</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">⚡</div>
+                    <div class="arch-node-label">Lambda</div>
+                    <div class="arch-node-sub">Python 3.12</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">🗄️</div>
+                    <div class="arch-node-label">DynamoDB</div>
+                    <div class="arch-node-sub">NoSQL DB</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Built with ❤️ by <a href="https://www.youtube.com/@yourdevopschannel" target="_blank">Madhukar Reddy</a> | Powered by AWS Serverless</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION - UPDATE THIS WITH YOUR API GATEWAY ENDPOINT
+        // ============================================================
+        const API_BASE_URL = 'https://30l6jzbg9l.execute-api.us-west-1.amazonaws.com/prod';
+        // Example: 'https://abc123xyz.execute-api.ap-south-1.amazonaws.com/prod'
+        // ============================================================
+
+        const urlInput = document.getElementById('urlInput');
+        const shortenBtn = document.getElementById('shortenBtn');
+        const resultArea = document.getElementById('resultArea');
+        const shortUrlEl = document.getElementById('shortUrl');
+        const copyBtn = document.getElementById('copyBtn');
+
+        // Shorten URL
+        async function shortenUrl() {
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                showError('Please enter a valid URL (including http:// or https://)');
+                return;
+            }
+
+            shortenBtn.classList.add('loading');
+            shortenBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/shorten`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.short_url) {
+                    showSuccess(data.short_url);
+                } else {
+                    showError(data.error || data.message || 'Failed to shorten URL');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Network error. Please try again.');
+            } finally {
+                shortenBtn.classList.remove('loading');
+                shortenBtn.disabled = false;
+            }
+        }
+
+        function isValidUrl(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function showSuccess(shortUrl) {
+            resultArea.classList.remove('error');
+            resultArea.classList.add('show');
+            resultArea.querySelector('.result-label').style.display = 'flex';
+            resultArea.querySelector('.result-url-wrapper').style.display = 'flex';
+            shortUrlEl.textContent = shortUrl;
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('copied');
+        }
+
+        function showError(message) {
+            resultArea.classList.add('show', 'error');
+            resultArea.querySelector('.result-label').style.display = 'none';
+            resultArea.querySelector('.result-url-wrapper').innerHTML = `<span class="error-message">❌ ${message}</span>`;
+        }
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const url = shortUrlEl.textContent;
+            try {
+                await navigator.clipboard.writeText(url);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+            }
+        });
+
+        // Event listeners
+        shortenBtn.addEventListener('click', shortenUrl);
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') shortenUrl();
+        });
+
+        // Load stats (optional - implement if you have a stats endpoint)
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalUrls').textContent = data.total_urls || '1,000+';
+                }
+            } catch (e) {
+                document.getElementById('totalUrls').textContent = '1,000+';
+            }
+        }
+        
+        loadStats();
+    </script>
+</body>
+</html>
