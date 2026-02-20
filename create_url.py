@@ -40,7 +40,7 @@ def lambda_handler(event, context):
         # Build short URL
         host = event.get('headers', {}).get('Host', '')
         stage = event.get('requestContext', {}).get('stage', 'prod')
-        short_url = f"https://{host}/{stage}/{short_id}"
+        short_url = f"https://{host}/{short_id}"
         
         return {
             'statusCode': 200,
