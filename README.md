@@ -108,3 +108,11 @@ Add this policy to Lambda role:
   ]
 }
 ```
+# Once it works with curl lets add a custom domain in API Gatway
+
+
+# Then open index.html, update  "API_BASE_URL" at Line Number 812
+
+just add https://your_api_domain without stage and path
+
+# Then create Cloudfront Distribution and follow the steps as per video
