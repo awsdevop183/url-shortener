@@ -4,12 +4,14 @@ import string
 import random
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('url-shortener')
+table = dynamodb.Table('url-shortner')
+import hashlib
 
-
-def generate_short_id():
-    characters = string.ascii_letters + string.digits
-    return ''.join(random.choice(characters) for _ in range(6))
+def generate_short_id(long_url: str, length: int = 8) -> str:
+    hash_object = hashlib.sha256(long_url.encode('utf-8'))
+    hash_bytes = hash_object.digest()
+    short_id = base64.urlsafe_b64encode(hash_bytes).decode('utf-8')
+    return short_id[:length].rstrip('=')
 
 
 def lambda_handler(event, context):
@@ -28,7 +30,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'Missing url parameter'})
             }
         
-        short_id = generate_short_id()
+        short_id = generate_short_id(long_url)
         
         table.put_item(
             Item={
@@ -40,7 +42,7 @@ def lambda_handler(event, context):
         # Build short URL
         host = event.get('headers', {}).get('Host', '')
         stage = event.get('requestContext', {}).get('stage', 'prod')
-        short_url = f"https://{host}/{short_id}"
+        short_url = f"https://{host}/{stage}/{short_id}"
         
         return {
             'statusCode': 200,
