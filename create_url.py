@@ -2,10 +2,11 @@ import json
 import boto3
 import string
 import random
+import hashlib
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('url-shortner')
-import hashlib
+
 
 def generate_short_id(long_url: str, length: int = 8) -> str:
     hash_object = hashlib.sha256(long_url.encode('utf-8'))
